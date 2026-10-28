@@ -1,0 +1,19 @@
+What I did:
+
+Loaded and inspected the full dataset.
+Checked missing values and duplicates.
+Analyzed fraud vs legitimate transaction distribution.
+Compared V1–V28 feature means between fraud and legitimate transactions.
+Analyzed fraudulent transaction amounts.
+Identified features with the largest differences between the two classes.
+
+Results:
+
+Dataset: 284,807 transactions, 31 features
+Missing values: 0
+Duplicates: 1,081
+Legitimate: 284,315 (99.83%)
+Fraud: 492 (0.17%)
+Top differing features: V3, V14, V17, V12, V10
+Average fraud amount: $122.21
+Maximum fraud amount: $2,125.87

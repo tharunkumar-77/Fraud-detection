@@ -1,0 +1,12 @@
+Day 2 – Exploratory Data Analysis
+
+• Dataset contains 284,807 transactions and 31 columns.
+• No missing values were found.
+• Dataset contains 1,081 duplicate rows.
+• Fraud cases: 492 (0.173%)
+• Normal cases: 284,315 (99.827%)
+• Dataset is highly imbalanced.
+• Transaction amounts range from 0 to 25,691.16 with a median of 22.
+• Features V17, V14, V12, V10, and V16 have the strongest negative correlation with fraud.
+• Features V11, V4, and V2 have the strongest positive correlation with fraud.
+• Accuracy alone will not be an appropriate evaluation metric because of the severe class imbalance.

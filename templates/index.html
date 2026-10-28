@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudGuard | Transaction Intelligence</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">FG</div>
+            <div>
+                <strong>FraudGuard</strong>
+                <span>Transaction Intelligence</span>
+            </div>
+        </div>
+
+        <nav>
+            <a class="nav-item active" href="#"><span>◈</span> Transaction Check</a>
+            <a class="nav-item" href="#history"><span>◷</span> Session History</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="status-card">
+                <span class="status-dot"></span>
+                <div>
+                    <strong>Detection engine</strong>
+                    <small id="engine-status">Checking status...</small>
+                </div>
+            </div>
+            <small class="version">FraudGuard v1.0</small>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">RISK ANALYSIS / LIVE</p>
+                <h1>Transaction Checker</h1>
+                <p class="subtitle">Evaluate a transaction against your trained fraud detection model.</p>
+            </div>
+            <div class="live-pill"><span></span> LIVE MODEL</div>
+        </header>
+
+        {% if not columns %}
+        <div class="banner banner-error">
+            <strong>Model unavailable.</strong>
+            Run <code>train_fraud_model.py</code> first, then restart the API.
+        </div>
+        {% endif %}
+
+        <section class="dashboard-grid">
+            <div class="panel checker-panel">
+                <div class="panel-heading">
+                    <div>
+                        <span class="panel-kicker">INPUT</span>
+                        <h2>Transaction details</h2>
+                    </div>
+                    <div class="secure-badge">● SECURE</div>
+                </div>
+
+                <form id="txn-form">
+                    <div class="primary-grid">
+                        <div class="input-group">
+                            <label for="Amount">Transaction amount</label>
+                            <div class="input-wrap">
+                                <span class="prefix">₹</span>
+                                <input type="number" step="any" id="Amount" name="Amount" value="0" min="0" required>
+                            </div>
+                            <small>Enter the transaction value.</small>
+                        </div>
+                        <div class="input-group">
+                            <label for="Time">Transaction time</label>
+                            <div class="input-wrap">
+                                <span class="prefix">◷</span>
+                                <input type="number" step="any" id="Time" name="Time" value="0" required>
+                            </div>
+                            <small>Seconds since the first transaction.</small>
+                        </div>
+                    </div>
+
+                    <details class="advanced">
+                        <summary>
+                            <span><b>Advanced features</b><small>V1–V28 PCA features</small></span>
+                            <i>+</i>
+                        </summary>
+                        <div class="advanced-inner">
+                            <p>Leave these at zero for a quick test, or enter values from a real dataset row.</p>
+                            <div class="advanced-grid">
+                                {% for col in columns %}
+                                    {% if col not in ["Time", "Amount"] %}
+                                    <div class="input-group compact">
+                                        <label for="{{ col }}">{{ col }}</label>
+                                        <input type="number" step="any" id="{{ col }}" name="{{ col }}" value="0">
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </details>
+
+                    <button type="submit" id="submit-btn" class="analyze-btn">
+                        <span>Analyze transaction</span>
+                        <b>→</b>
+                    </button>
+                </form>
+            </div>
+
+            <div id="result" class="panel result-panel hidden">
+                <div class="result-top">
+                    <span class="panel-kicker">MODEL OUTPUT</span>
+                    <span id="result-icon" class="result-icon">✓</span>
+                </div>
+                <div class="result-content">
+                    <p class="result-label">Detection verdict</p>
+                    <div class="verdict" id="verdict-text">Waiting</div>
+                    <div class="probability-row">
+                        <span>Fraud probability</span>
+                        <strong id="prob-text">0.00%</strong>
+                    </div>
+                    <div class="prob-bar-track">
+                        <div class="prob-bar-fill" id="prob-bar-fill"></div>
+                    </div>
+                    <div class="threshold" id="threshold-text">Decision threshold: —</div>
+                </div>
+                <div class="result-foot">
+                    <span>Transaction amount</span>
+                    <strong id="result-amount">₹0</strong>
+                </div>
+            </div>
+
+            <div class="panel info-panel">
+                <span class="panel-kicker">HOW IT WORKS</span>
+                <h2>From transaction to decision</h2>
+                <div class="steps">
+                    <div class="step"><span>01</span><div><strong>Input</strong><small>Transaction features are collected.</small></div></div>
+                    <div class="step"><span>02</span><div><strong>Analyze</strong><small>Your trained model scores the transaction.</small></div></div>
+                    <div class="step"><span>03</span><div><strong>Decide</strong><small>Probability is compared with the threshold.</small></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="history-section" id="history">
+            <div class="section-title">
+                <div>
+                    <span class="panel-kicker">ACTIVITY</span>
+                    <h2>Session history</h2>
+                </div>
+                <button type="button" id="clear-history-btn" class="clear-btn">Clear history</button>
+            </div>
+            <div class="history-card">
+                <div class="history-head">
+                    <span>TRANSACTION</span><span>VERDICT</span><span>PROBABILITY</span>
+                </div>
+                <ul id="history-list" class="history-list"></ul>
+                <div id="empty-history" class="empty-history">
+                    <span>◌</span>
+                    <p>No transactions checked yet.</p>
+                    <small>Your analyzed transactions will appear here.</small>
+                </div>
+            </div>
+        </section>
+
+        <footer>FraudGuard • ML-powered transaction analysis • For research and demonstration purposes</footer>
+    </main>
+</div>
+
+<script>
+const form = document.getElementById("txn-form");
+const resultBox = document.getElementById("result");
+const verdictText = document.getElementById("verdict-text");
+const probText = document.getElementById("prob-text");
+const probBarFill = document.getElementById("prob-bar-fill");
+const thresholdText = document.getElementById("threshold-text");
+const submitBtn = document.getElementById("submit-btn");
+const historyList = document.getElementById("history-list");
+const emptyHistory = document.getElementById("empty-history");
+const clearHistoryBtn = document.getElementById("clear-history-btn");
+const amountInput = document.getElementById("Amount");
+const resultAmount = document.getElementById("result-amount");
+const resultIcon = document.getElementById("result-icon");
+const engineStatus = document.getElementById("engine-status");
+
+let checkCount = 0;
+
+window.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const res = await fetch("/api/health");
+        const data = await res.json();
+        if (!data.model_loaded) {
+            submitBtn.disabled = true;
+            submitBtn.querySelector("span").textContent = "Model unavailable";
+            engineStatus.textContent = "Model not loaded";
+        } else {
+            engineStatus.textContent = "Online & ready";
+        }
+    } catch (err) {
+        engineStatus.textContent = "API unreachable";
+    }
+});
+
+amountInput.addEventListener("input", () => {
+    const val = parseFloat(amountInput.value);
+    amountInput.classList.toggle("input-invalid", !isNaN(val) && val < 0);
+});
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+    const payload = {};
+    formData.forEach((value, key) => payload[key] = value);
+
+    submitBtn.disabled = true;
+    submitBtn.querySelector("span").textContent = "Analyzing...";
+    resultBox.className = "panel result-panel visible pending";
+    verdictText.textContent = "Analyzing";
+    probText.textContent = "—";
+    probBarFill.style.width = "0%";
+
+    try {
+        const res = await fetch("/api/predict", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            renderError(data.error || "Unknown error");
+        } else {
+            renderResult(data, payload.Amount);
+            addHistoryEntry(data, payload.Amount);
+        }
+    } catch (err) {
+        renderError(err.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.querySelector("span").textContent = "Analyze transaction";
+    }
+});
+
+function renderResult(data, amount) {
+    const fraud = Boolean(data.is_fraud);
+    const pct = data.fraud_probability * 100;
+
+    resultBox.className = `panel result-panel visible ${fraud ? "fraud" : "legit"}`;
+    resultIcon.textContent = fraud ? "!" : "✓";
+    verdictText.textContent = data.verdict;
+    probText.textContent = `${pct.toFixed(2)}%`;
+    resultAmount.textContent = `₹${Number(amount).toLocaleString("en-IN")}`;
+    thresholdText.textContent = `Decision threshold: ${data.threshold_used}`;
+
+    requestAnimationFrame(() => {
+        probBarFill.style.width = `${Math.min(Math.max(pct, 0), 100)}%`;
+        probBarFill.className = `prob-bar-fill ${fraud ? "bar-fraud" : "bar-legit"}`;
+    });
+}
+
+function renderError(message) {
+    resultBox.className = "panel result-panel visible fraud";
+    resultIcon.textContent = "!";
+    verdictText.textContent = "Analysis error";
+    probText.textContent = "—";
+    thresholdText.textContent = message;
+    probBarFill.style.width = "0%";
+}
+
+function addHistoryEntry(data, amount) {
+    checkCount++;
+    emptyHistory.style.display = "none";
+
+    const li = document.createElement("li");
+    li.className = `history-item ${data.is_fraud ? "fraud" : "legit"}`;
+
+    const transaction = document.createElement("span");
+    transaction.innerHTML = `<b>#${checkCount}</b><small>₹${Number(amount).toLocaleString("en-IN")}</small>`;
+
+    const verdict = document.createElement("span");
+    verdict.className = "history-verdict";
+    verdict.textContent = data.verdict;
+
+    const probability = document.createElement("strong");
+    probability.textContent = `${(data.fraud_probability * 100).toFixed(1)}%`;
+
+    li.append(transaction, verdict, probability);
+    historyList.prepend(li);
+}
+
+clearHistoryBtn.addEventListener("click", () => {
+    historyList.innerHTML = "";
+    checkCount = 0;
+    emptyHistory.style.display = "flex";
+});
+</script>
+</body>
+</html>
